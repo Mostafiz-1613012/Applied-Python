@@ -2,7 +2,7 @@ name: Update Gold Price
 
 on:
   schedule:
-    - cron: '0 0 * * *' # Run the workflow daily at midnight (UTC)
+    - cron: '40 1 * * *' # Run the workflow daily at midnight (UTC)
 
 jobs:
 
