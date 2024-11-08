@@ -1,0 +1,50 @@
+name: Update Gold Price
+
+on:
+  schedule:
+    - cron: '0 0 * * *' # Run the workflow daily at midnight (UTC)
+
+jobs:
+
+  update-gold-price:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v2
+    
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.9
+        
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install csv requests beautifulsoup4
+        
+    - name: Update gold price
+      run: |
+        import csv
+        import requests
+        import datetime
+        from bs4 import BeautifulSoup
+        
+        try:
+            resp = requests.get("https://www.bajus.org/gold-price")
+            soup = BeautifulSoup(resp.content, "html.parser")
+            main_data = [datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")]
+            for data in soup.find_all('span', {"class":"price"}):
+                main_data.append(float(data.text.split('BDT/GRAM')[0].strip().replace(',', "")))
+            
+            csv_file = r'price_of_gold_silver.csv'
+            with open(csv_file, mode='a', newline='') as file:
+                writer = csv.writer(file)
+                writer.writerow(main_data)
+        except Exception as e:
+            print(f"Error: {e}")
+            
+    - name: Commit changes
+      uses: stefanzweifel/git-auto-commit-action@v4
+      with:
+        commit_message: Update gold price data
+        file_pattern: price_of_gold_silver.csv
